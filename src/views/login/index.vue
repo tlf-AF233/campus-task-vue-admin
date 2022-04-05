@@ -20,7 +20,7 @@
           id="account"
           ref="username"
           v-model="loginForm.username"
-          placeholder="Username"
+          placeholder="请输入邮箱或手机号"
           name="username"
           type="text"
           tabindex="1"
@@ -38,7 +38,7 @@
           ref="password"
           v-model="loginForm.password"
           :type="passwordType"
-          placeholder="Password"
+          placeholder="请输入密码"
           name="password"
           tabindex="2"
           auto-complete="on"
@@ -48,50 +48,60 @@
           <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
         </span>
       </el-form-item>
+      <el-form-item prop="roleCode" class="btn-line">
+        <el-radio v-model="loginForm.roleCode" label="TEACHER">我是老师</el-radio>
+        <el-radio v-model="loginForm.roleCode" label="STUDENT">我是学生</el-radio>
+      </el-form-item>
+      <el-divider></el-divider>
+      
 
+      <div class="btn-line">
       <el-button
         id="login_btn"
         :loading="loading"
         type="primary"
-        style="width:100%;margin-bottom:30px;"
+        style="width: 50%; margin-bottom:30px;"
         @click.native.prevent="handleLogin"
       >登录</el-button>
+      
+      <el-button
+        id="register_btn"
+        :loading="loading"
+        type="primary"
+        style="width: 50%; margin-bottom:30px;"
+        @click.native.prevent="goToRegister"
+      >注册</el-button>
+      </div>
     </el-form>
+    
     <div class="info" style="bottom: 40px;">Beta: 1.0</div>
     <div class="info">Technical Support: XXX</div>
   </div>
 </template>
 
 <script>
-import md5 from "js-md5";
+
+import { login } from "@/api/login"
+import { setToken, setRole } from '@/utils/auth'
+
 export default {
   name: "Login",
   data() {
-    const validateUsername = (rule, value, callback) => {
-      if (value.length < 3) {
-        callback(new Error("Please enter the correct user name"));
-      } else {
-        callback();
-      }
-    };
-    const validatePassword = (rule, value, callback) => {
-      if (value.length < 6) {
-        callback(new Error("The password can not be less than 6 digits"));
-      } else {
-        callback();
-      }
-    };
     return {
       loginForm: {
-        username: "admin",
-        password: "111111"
+        username: "",
+        password: "",
+        roleCode: "",
       },
       loginRules: {
         username: [
-          { required: true, trigger: "blur", validator: validateUsername }
+          { required: true, trigger: "blur", message: '请输入手机号/邮箱' }
         ],
         password: [
-          { required: true, trigger: "blur", validator: validatePassword }
+          { required: true, trigger: "blur", message: '请输入密码' }
+        ],
+        roleCode: [
+          { required: true, trigger: "blur", message: '请选择角色' }
         ]
       },
       loading: false,
@@ -119,40 +129,36 @@ export default {
       });
     },
     handleLogin() {
-      let that = this;
-      this.loading = true;
+
       //数据格式验证
       this.$refs.loginForm.validate(valid => {
         if (valid) {
-          localStorage.setItem("hasLogin", true);
-          this.$router.push({ path: "/" });
+          this.loading = true;
+          // localStorage.setItem("hasLogin", true);
+          
+          login(this.loginForm).then(res => {
+            this.loading = false;
+            const token = "Bearer " + res.data.token
+            // 设置token
+            setToken(token)
+            setRole(res.data.roleList)
+    
+            this.$router.push(this.$route.query.redirect || '/index');
+          })
+
+         
+         
         } else {
-          console.log("验证失败");
+          
         }
       });
       return 0;
-      // 可自定义登录时的逻辑处理
-      this.req({
-        url: "login",
-        data: {
-          account: that.loginForm.username,
-          psw: md5(that.loginForm.password + "*/-sz") //对密码进行加盐md5处理
-        },
-        method: "POST"
-      }).then(
-        res => {
-          console.log("res :", res);
-          localStorage.setItem("hasLogin", true);
-          localStorage.setItem("token", res.data.token);
-          localStorage.setItem("userInfo", JSON.stringify(res.data.userInfo));
-          this.$router.push({ path: "/" });
-        },
-        err => {
-          console.log("err :", err);
-          this.passwordError = true;
-          this.loading = false;
-        }
-      );
+    },
+
+    goToRegister() {
+      this.$router.push({
+        path: "/register"
+      })
     }
   }
 };
@@ -271,6 +277,11 @@ $light_gray: #eee;
     color: $dark_gray;
     cursor: pointer;
     user-select: none;
+  }
+
+  .btn-line {
+    display: flex;
+    justify-content: space-around;
   }
 }
 </style>

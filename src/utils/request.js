@@ -13,7 +13,7 @@ const service = axios.create({
 service.interceptors.request.use(
   config => {
     // do something before request is sent
-    config.headers.token = localStorage.getItem('token')
+    config.headers.authorization = localStorage.getItem('token')
 
     return config
   },
@@ -42,14 +42,14 @@ service.interceptors.response.use(
     // if the custom code is not 100, it is judged as an error.
     if (res.code !== 200) {
       Message({
-        message: res.msg || 'Error check your token or method',
+        message: res.msg,
         type: 'error',
         duration: 2 * 1000
       })
-      return Promise.reject(new Error(res.msg || 'Error'))
-    } else {
-      return res
+      
     }
+    
+    return res
   },
   error => {
     console.log('err' + error) // for debug
@@ -58,7 +58,7 @@ service.interceptors.response.use(
       type: 'error',
       duration: 2 * 1000
     })
-    return Promise.reject(error)
+    return res
   }
 )
 

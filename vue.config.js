@@ -38,8 +38,8 @@ module.exports = {
     },
     proxy: {
       // detail: https://cli.vuejs.org/config/#devserver-proxy
-      '/admin': {
-        target: `http://localhost:8886/`,
+      '/api': {
+        target: process.env.VUE_APP_BASE_API,
         changeOrigin: true,
         pathRewrite: {
         }

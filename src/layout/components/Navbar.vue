@@ -5,7 +5,18 @@
     <breadcrumb class="breadcrumb-container" />
 
     <div class="right-menu">
-      <el-button @click="logout">退出登录</el-button>
+      <el-menu mode="horizontal" >
+        <el-submenu :title="name" index="1">
+          <template slot="title"><el-avatar size="medium" :src="avatarUrl"></el-avatar></template>
+          <el-menu-item @click="gotoUserProfile" index="1-1">
+            <i class="el-icon-user" ></i>个人中心
+          </el-menu-item>
+          <el-menu-item @click="logout" index="1-2">
+            <i class="el-icon-close" ></i>退出登录
+          </el-menu-item>
+        </el-submenu>
+      </el-menu>
+      
     </div>
   </div>
 </template>
@@ -14,31 +25,48 @@
 import { mapGetters } from 'vuex'
 import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
+import { removeToken, removeRole } from '@/utils/auth'
+import { resetRouter } from '../../router'
+import store from '../../store'
 
 export default {
   components: {
     Breadcrumb,
     Hamburger
   },
+  
   computed: {
     ...mapGetters([
       'sidebar',
-      'avatar'
+      'avatarUrl',
+      'name'
     ])
   },
+
   methods: {
     toggleSideBar() {
       this.$store.dispatch('app/toggleSideBar')
     },
     async logout() {
-      localStorage.removeItem('hasLogin')
+      // 清除token
+      removeToken()
+      removeRole()
+      // 重置vueRouter
+      resetRouter()
+      // 重置state中保存的路由
+      store.dispatch('resetRoutes')
       this.$router.push(`/login?redirect=${this.$route.fullPath}`)
+    },
+
+    gotoUserProfile() {
+      this.$router.push("/my/profile")
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+
 .navbar {
   height: 50px;
   overflow: hidden;
